@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>مدیریت سانس</title>
+
+<!-- فونت -->
+<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font/dist/font-face.css" rel="stylesheet">
+
+<!-- قرارگیری صحیح ۳ فایل موردنیاز تقویم شمسی (حتماً همین ترتیب) -->
+<!-- jQuery -->
+<script src="https://unpkg.com/jquery@3.6.0/dist/jquery.min.js"></script>
+
+<!-- Persian Date & Datepicker -->
+<script src="https://unpkg.com/persian-date/dist/persian-date.js"></script>
+<script src="https://unpkg.com/persian-datepicker/dist/js/persian-datepicker.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/persian-datepicker/dist/css/persian-datepicker.min.css">
+
+
+<style>
+    body {
+        font-family: 'Vazir', sans-serif;
+        direction: rtl;
+        background: #f1f1f1;
+        padding: 20px;
+        margin: 0;
+    }
+
+    .container {
+        width: 100%;
+        max-width: 480px;
+        background: white;
+        margin: auto;
+        padding: 25px;
+        border-radius: 14px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        box-sizing: border-box;
+    }
+
+    h3 {
+        margin-top: 0;
+        margin-bottom: 20px;
+        text-align: center;
+        font-size: 21px;
+        font-weight: 600;
+        color: #333;
+    }
+
+    input {
+        width: 100%;
+        padding: 14px;
+        font-size: 16px;
+        border-radius: 10px;
+        border: 1px solid #ccc;
+        background: #fafafa;
+        margin-bottom: 15px;
+        box-sizing: border-box;
+        font-family: Vazir;
+        transition: 0.2s;
+    }
+
+    button {
+        width: 100%;
+        padding: 15px;
+        background: #0059b3;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 17px;
+        font-family: Vazir;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    button:hover {
+        background: #004a99;
+    }
+
+    .hidden {
+        display: none;
+    }
+</style>
+</head>
+<body>
+
+<div class="container" id="loginBox">
+    <h3>ورود مدیر</h3>
+    <input id="password" type="password" placeholder="رمز مدیریت">
+    <button id="loginBtn">ورود</button>
+</div>
+
+<div class="container hidden" id="adminBox">
+    <h3>ثبت سانس جدید</h3>
+    <input type="hidden" id="dayField">
+    <input type="hidden" id="timeField">
+    <input id="inputTime" placeholder="زمان سانس">
+    <input id="inputPlace" placeholder="مکان سانس">
+    <input id="inputLocation" placeholder="لینک لوکیشن">
+
+    <button id="saveBtn">ذخیره</button>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const adminSecret = "admin123";
+
+    $("#inputTime").persianDatepicker({
+        format: "dddd YYYY/MM/DD HH:mm",
+        initialValue: false,
+        autoClose: true,
+        timePicker: {
+            enabled: true,
+            meridiem: { enabled: false }
+        },
+        onSelect: function (unix) {
+
+            let d = new persianDate(unix);
+
+            // روز هفته + تاریخ
+            let dayText = d.format("dddd YYYY/MM/DD");
+
+            // ساعت شروع
+            let startHour = d.hour();
+            let startMin = d.minute();
+
+            // محاسبه ساعت پایان (90 دقیقه)
+            let endUnix = unix + (90 * 60 * 1000);
+            let end = new persianDate(endUnix);
+            let endHour = end.hour();
+            let endMin = end.minute();
+
+            function fix(n){ return n < 10 ? "0"+n : n; }
+
+            let startStr = fix(startHour) + ":" + fix(startMin);
+            let endStr = fix(endHour) + ":" + fix(endMin);
+
+            let timeRange = startStr + " تا " + endStr;
+
+            // ذخیره در hidden inputs
+            document.getElementById("dayField").value = dayText;
+            document.getElementById("timeField").value = timeRange;
+        }
+    });
+
+
+    /* دکمه ورود مدیر */
+    document.getElementById("loginBtn").onclick = function () {
+        const pass = document.getElementById("password").value.trim();
+
+        if (pass === adminSecret) {
+            document.getElementById("loginBox").classList.add("hidden");
+            document.getElementById("adminBox").classList.remove("hidden");
+        } else {
+            alert("رمز اشتباه است");
+        }
+    };
+
+    /* ذخیره سانس جدید */
+    document.getElementById("saveBtn").onclick = async function () {
+
+        let day = document.getElementById("dayField").value.trim();
+        let time = document.getElementById("timeField").value.trim();
+        let place = document.getElementById("inputPlace").value.trim();  // سالن
+        let location = document.getElementById("inputLocation").value.trim();
+
+        let res = await fetch("/api/save-session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ day, time, place, location })
+        });
+
+        let out = await res.json();
+
+        if (out.ok) {
+            alert("سانس ذخیره شد");
+            location.href = "/";
+        } else {
+            alert("خطا در ذخیره‌سازی");
+        }
+    };
+
+
+});
+</script>
+
+</body>
+</html>

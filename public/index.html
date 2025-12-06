@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ثبت‌نام سانس فوتسال</title>
+
+<!-- فونت وزیر (لوکال/وب) -->
+<style>
+@font-face {
+    font-family: 'Vazir';
+    src: url('Vazir.woff2') format('woff2'),
+         url('Vazir.woff') format('woff');
+}
+</style>
+
+<style>
+body {
+    font-family: 'Vazir', sans-serif;
+    direction: rtl;
+    margin:0;
+    padding:0;
+    background:#f1f1f1;
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+    min-height:100vh;
+}
+
+.wrapper {
+    width:100%;
+    max-width:430px;
+    padding:15px;
+}
+
+.card {
+    background:white;
+    padding:25px;
+    border-radius:18px;
+    box-shadow:0 4px 16px rgba(0,0,0,.12);
+    text-align:center;
+}
+
+/* دکمه ورود مدیر */
+.admin-btn {
+    display:inline-block;
+    padding:10px 22px;
+    background:#ff9800;
+    color:white;
+    font-size:15px;
+    border-radius:10px;
+    text-decoration:none;
+    margin-bottom:18px;
+}
+
+/* باکس اطلاعات سانس */
+#sessionInfo {
+    background:#fafafa;
+    padding:14px;
+    border-radius:12px;
+    border:1px solid #ddd;
+    margin-bottom:15px;
+    font-size:14px;
+    line-height:1.8;
+}
+
+/* ظرفیت */
+#capacityBox {
+    background:#28a745;
+    padding:12px;
+    color:white;
+    border-radius:12px;
+    font-size:15px;
+    font-weight:bold;
+    margin-bottom:15px;
+}
+
+/* فیلد + دکمه کنار هم */
+.input-row {
+    display:flex;
+    gap:8px;
+}
+
+.input-row input {
+    flex:1;
+    padding:12px;
+    border-radius:10px;
+    border:1px solid #bbb;
+    font-size:14px;
+}
+
+.input-row button {
+    width:95px;
+    padding:12px;
+    border-radius:10px;
+    background:#0b66d1;
+    color:white;
+    border:none;
+    font-size:14px;
+    cursor:pointer;
+}
+
+button:disabled { background:#888; }
+
+/* لیست بازیکنان */
+ul {
+    padding:0;
+    margin-top:20px;
+    list-style:none;
+}
+
+li {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 12px;
+    background:#fff;
+    border:1px solid #ddd;
+    border-radius:10px;
+    margin-bottom:8px;
+    font-size:14px;
+}
+
+/* دکمه حذف کوچک */
+.remove-btn {
+    background:#d9534f;
+    color:white;
+    padding:5px 8px;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:12px;
+    white-space:nowrap;
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrapper">
+    <div class="card">
+
+        <a class="admin-btn" href="admin.html">ورود مدیر</a>
+
+        <h2 style="margin:0 0 12px 0;">سانس فوتسال</h2>
+
+        <div id="sessionInfo">در حال بارگذاری...</div>
+        <div id="capacityBox"></div>
+
+        <div class="input-row">
+            <input id="playerName" placeholder="نام بازیکن">
+            <button id="addBtn" onclick="addPlayer()">افزودن</button>
+        </div>
+
+        <ul id="playersList"></ul>
+
+    </div>
+</div>
+
+<script>
+let SESSION_ID = null;
+let CURRENT_PLAYER_COUNT = 0;
+
+/* دریافت آخرین سانس */
+async function loadSession() {
+    let res = await fetch("/api/latest-session");
+    let data = await res.json();
+
+    if (!data || !data.id) {
+        document.getElementById("sessionInfo").innerHTML = "<b>هنوز سانسی ثبت نشده</b>";
+        return;
+    }
+
+    SESSION_ID = data.id;
+
+    document.getElementById("sessionInfo").innerHTML =
+        "<strong>روز:</strong> " + data.day + "<br>" +
+        "<strong>ساعت:</strong> " + data.time + "<br>" +
+        "<strong>سالن:</strong> " + data.place + "<br>" +
+        "<strong>لوکیشن:</strong> <a href='" + data.location + "' target='_blank'>مشاهده</a>";
+
+    loadPlayers();
+}
+
+/* دریافت لیست بازیکنان */
+async function loadPlayers() {
+    let res = await fetch("/api/players", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ session_id: SESSION_ID })
+    });
+
+    let players = await res.json();
+    CURRENT_PLAYER_COUNT = players.length;
+
+    let list = document.getElementById("playersList");
+    list.innerHTML = "";
+
+    players.forEach((p, i) => {
+        let li = document.createElement("li");
+        li.innerHTML =
+            "<span>" + (i+1) + ". " + p.player_name + "</span>" +
+            "<button class='remove-btn' onclick='removePlayer(" + p.id + ")'>حذف</button>";
+        list.appendChild(li);
+    });
+
+    updateCapacity();
+}
+
+/* نمایش ظرفیت */
+function updateCapacity() {
+    const max = 12;
+    let left = max - CURRENT_PLAYER_COUNT;
+
+    let box = document.getElementById("capacityBox");
+
+    if (left > 0) {
+        box.style.background = "#28a745";
+        box.innerHTML = "ظرفیت باقیمانده: " + left + " نفر";
+        addBtn.disabled = false;
+    } else {
+        box.style.background = "#d9534f";
+        box.innerHTML = "تکمیل شد";
+        addBtn.disabled = true;
+    }
+}
+
+/* افزودن بازیکن */
+async function addPlayer() {
+    if (!SESSION_ID) return alert("سانس ثبت نشده است");
+
+    let name = playerName.value.trim();
+    if (!name) return alert("نام را وارد کنید");
+
+    // *** جلوگیری از اسم تکراری در فرانت‌اند ***
+    let existingNames = Array.from(document.querySelectorAll("#playersList li span"))
+                              .map(s => s.textContent.replace(/^\d+\.\s*/, "").trim());
+    if (existingNames.includes(name)) {
+        alert("این نام قبلاً ثبت شده است");
+        return;
+    }
+    // *************************************************
+
+    let res = await fetch("/api/add-player", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ session_id: SESSION_ID, player_name: name })
+    });
+
+    let data = await res.json();
+
+    if (data.ok) {
+        playerName.value = "";
+        loadPlayers();
+    } else if (data.msg === "duplicate") {
+        alert("این بازیکن قبلاً ثبت شده است.");
+    } else {
+        alert("این سانس تکمیل شده است.");
+    }
+}
+
+/* حذف */
+async function removePlayer(id) {
+    await fetch("/api/remove-player", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ id })
+    });
+
+    loadPlayers();
+}
+
+loadSession();
+</script>
+
+</body>
+</html>
