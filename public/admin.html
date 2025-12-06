@@ -8,7 +8,6 @@
 <!-- فونت -->
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font/dist/font-face.css" rel="stylesheet">
 
-<!-- قرارگیری صحیح ۳ فایل موردنیاز تقویم شمسی (حتماً همین ترتیب) -->
 <!-- jQuery -->
 <script src="https://unpkg.com/jquery@3.6.0/dist/jquery.min.js"></script>
 
@@ -16,7 +15,6 @@
 <script src="https://unpkg.com/persian-date/dist/persian-date.js"></script>
 <script src="https://unpkg.com/persian-datepicker/dist/js/persian-datepicker.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/persian-datepicker/dist/css/persian-datepicker.min.css">
-
 
 <style>
     body {
@@ -93,9 +91,11 @@
 
 <div class="container hidden" id="adminBox">
     <h3>ثبت سانس جدید</h3>
+
     <input type="hidden" id="dayField">
     <input type="hidden" id="timeField">
-    <input id="inputTime" placeholder="زمان سانس">
+
+    <input id="inputTime" placeholder="زمان سانس (تاریخ + ساعت)">
     <input id="inputPlace" placeholder="مکان سانس">
     <input id="inputLocation" placeholder="لینک لوکیشن">
 
@@ -107,49 +107,46 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const adminSecret = "admin123";
 
+    /* تقویم شمسی کاملاً درست */
     $("#inputTime").persianDatepicker({
-        format: "dddd YYYY/MM/DD HH:mm",
-        initialValue: false,
         autoClose: true,
+        initialValue: false,
+        dateFormat: "dddd YYYY/MM/DD",
         timePicker: {
             enabled: true,
+            second: { enabled: false },
+            minute: { enabled: true, step: 1 },
             meridiem: { enabled: false }
         },
+
         onSelect: function (unix) {
 
-            let d = new persianDate(unix);
+            console.clear();
+            const pd = new persianDate(unix);
+            console.log("unix:", unix);
+            console.log("pd:", pd.format("YYYY/MM/DD HH:mm"));
 
-            // روز هفته + تاریخ
-            let dayText = d.format("dddd YYYY/MM/DD");
+            /* استخراج روز */
+            const day = pd.format("dddd YYYY/MM/DD");
 
-            // ساعت شروع
-            let startHour = d.hour();
-            let startMin = d.minute();
+            /* شروع سانس */
+            const startTime = pd.format("HH:mm");
 
-            // محاسبه ساعت پایان (90 دقیقه)
-            let endUnix = unix + (90 * 60 * 1000);
-            let end = new persianDate(endUnix);
-            let endHour = end.hour();
-            let endMin = end.minute();
+            /* پایان سانس با ۹۰ دقیقه بعد */
+            const endTime = pd.clone().add('minute', 90).format("HH:mm");
 
-            function fix(n){ return n < 10 ? "0"+n : n; }
+            /* ذخیره فیلدها */
+            document.getElementById("dayField").value = day;
+            document.getElementById("timeField").value = `${startTime} تا ${endTime}`;
 
-            let startStr = fix(startHour) + ":" + fix(startMin);
-            let endStr = fix(endHour) + ":" + fix(endMin);
-
-            let timeRange = startStr + " تا " + endStr;
-
-            // ذخیره در hidden inputs
-            document.getElementById("dayField").value = dayText;
-            document.getElementById("timeField").value = timeRange;
+            /* نمایش در input اصلی داخل صفحه */
+            document.getElementById("inputTime").value = `${day} - ${startTime} تا ${endTime}`;
         }
     });
 
-
-    /* دکمه ورود مدیر */
+    /* دکمه ورود */
     document.getElementById("loginBtn").onclick = function () {
         const pass = document.getElementById("password").value.trim();
-
         if (pass === adminSecret) {
             document.getElementById("loginBox").classList.add("hidden");
             document.getElementById("adminBox").classList.remove("hidden");
@@ -158,12 +155,12 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     };
 
-    /* ذخیره سانس جدید */
+    /* ذخیره سانس */
     document.getElementById("saveBtn").onclick = async function () {
 
         let day = document.getElementById("dayField").value.trim();
         let time = document.getElementById("timeField").value.trim();
-        let place = document.getElementById("inputPlace").value.trim();  // سالن
+        let place = document.getElementById("inputPlace").value.trim();
         let location = document.getElementById("inputLocation").value.trim();
 
         let res = await fetch("/api/save-session", {
@@ -175,13 +172,12 @@ document.addEventListener("DOMContentLoaded", function () {
         let out = await res.json();
 
         if (out.ok) {
-            alert("سانس ذخیره شد");
+            alert("سانس ذخیره شد!");
             location.href = "/";
         } else {
             alert("خطا در ذخیره‌سازی");
         }
     };
-
 
 });
 </script>
