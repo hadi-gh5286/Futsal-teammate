@@ -12,8 +12,8 @@
          url('Vazir.woff') format('woff');
 }
 
-/* جلوگیری از اسکرول افقی */
 * { box-sizing: border-box; }
+
 body {
     font-family: 'Vazir', sans-serif;
     direction: rtl;
@@ -23,7 +23,7 @@ body {
     overflow-x: hidden;
 }
 
-/* لودینگ تمام‌صفحه */
+/* ------------------------- لودینگ صفحه ------------------------- */
 #loadingScreen {
     position: fixed;
     top: 0; right: 0;
@@ -34,39 +34,34 @@ body {
     justify-content: center;
     align-items: center;
     z-index: 9999;
-    transition: opacity 0.4s ease;
+    transition: opacity .4s ease;
 }
 
-/* توپ فوتسال چرخان (با ball.svg خودت) */
 .ball-spinner {
     width: 55px;
     height: 55px;
-    background-image: url('ball.svg'); /* ← توپ خودت */
+    background-image: url('ball.svg');
     background-size: cover;
-    background-position: center;
-    animation: spinBall 0.9s linear infinite;
+    animation: spinBall .9s linear infinite;
 }
 
 .mini-ball-spinner {
     width: 32px;
     height: 32px;
-    background-image: url('ball.svg'); /* ← توپ خودت */
+    background-image: url('ball.svg');
     background-size: cover;
-    background-position: center;
-    animation: spinBall 0.9s linear infinite;
+    animation: spinBall .9s linear infinite;
 }
 
-@keyframes spinBall {
-    100% { transform: rotate(360deg); }
-}
+@keyframes spinBall { 100% { transform: rotate(360deg); } }
 
 .loading-text {
     margin-top: 15px;
     font-size: 15px;
-    color: #333;
+    color: #444;
 }
 
-/* لایه اصلی */
+/* ------------------------- بدنه اصلی ------------------------- */
 .wrapper {
     width: 100%;
     max-width: 430px;
@@ -78,7 +73,7 @@ body {
     background: white;
     padding: 25px;
     border-radius: 18px;
-    box-shadow: 0 4px 16px rgba(0,0,0,.12);
+    box-shadow: 0 4px 15px rgba(0,0,0,.15);
     text-align: center;
 }
 
@@ -113,12 +108,11 @@ body {
     margin-bottom: 15px;
 }
 
-/* ورودی + دکمه */
+/* ------------------------- ورودی ------------------------- */
 .input-row {
     display: flex;
     gap: 8px;
     width: 100%;
-    overflow: hidden;
 }
 .input-row input {
     flex: 1;
@@ -135,36 +129,51 @@ body {
     background: #0b66d1;
     color: white;
     border: none;
-    font-size: 14px;
     cursor: pointer;
     flex-shrink: 0;
 }
 button:disabled { background: #888; }
 
-/* لودینگ کوچک */
+/* ------------------------- لودینگ افزودن ------------------------- */
 #addLoading {
-    margin-top: 12px;
-    text-align: center;
-    display: none;
-}
-#addLoading div {
-    margin: auto;
-}
+    width: 100%;
+    height: 120px;
+    margin-top: 10px;
 
-/* لیست */
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+#addLoading.active { display: flex !important; }
+
+/* ------------------------- لودینگ حذف ------------------------- */
+#removeLoading {
+    width: 100%;
+    height: 120px;
+    margin-top: 10px;
+
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+#removeLoading.active { display: flex !important; }
+
+/* ------------------------- لیست بازیکنان ------------------------- */
 ul {
+    list-style: none;
     padding: 0;
     margin-top: 20px;
-    list-style: none;
 }
 li {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 12px;
     background: #fff;
     border: 1px solid #ddd;
     border-radius: 10px;
+    padding: 10px 12px;
     margin-bottom: 8px;
     font-size: 14px;
 }
@@ -172,20 +181,18 @@ li {
 .remove-btn {
     background: #d9534f;
     color: white;
-    padding: 5px 8px;
-    border: none;
+    padding: 6px 9px;
     border-radius: 6px;
+    border: none;
     cursor: pointer;
     font-size: 12px;
-    white-space: nowrap;
 }
 </style>
-
 </head>
 
 <body>
 
-<!-- لودینگ اصلی -->
+<!-- ------------------------- لودینگ اولیه ------------------------- -->
 <div id="loadingScreen">
     <div class="ball-spinner"></div>
     <div class="loading-text">در حال بارگذاری...</div>
@@ -206,10 +213,16 @@ li {
             <button id="addBtn" onclick="addPlayer()">افزودن</button>
         </div>
 
-        <!-- لودینگ کوچک -->
+        <!-- لودینگ افزودن -->
         <div id="addLoading">
             <div class="mini-ball-spinner"></div>
             <div style="font-size:13px; color:#444; margin-top:4px;">در حال افزودن...</div>
+        </div>
+
+        <!-- لودینگ حذف -->
+        <div id="removeLoading">
+            <div class="mini-ball-spinner"></div>
+            <div style="font-size:13px; color:#444; margin-top:4px;">در حال حذف...</div>
         </div>
 
         <ul id="playersList"></ul>
@@ -221,28 +234,39 @@ li {
 let SESSION_ID = null;
 let CURRENT_PLAYER_COUNT = 0;
 
+/* ------------------------- لودینگ صفحه ------------------------- */
 function hideLoading() {
     let loader = document.getElementById("loadingScreen");
     loader.style.opacity = "0";
     setTimeout(() => {
         loader.style.display = "none";
         document.getElementById("mainContent").style.opacity = "1";
-    }, 400);
+    }, 450);
 }
 
+/* ------------------------- لودینگ افزودن ------------------------- */
 function showAddLoading() {
-    document.getElementById("addLoading").style.display = "block";
+    document.getElementById("addLoading").classList.add("active");
 }
 function hideAddLoading() {
-    document.getElementById("addLoading").style.display = "none";
+    document.getElementById("addLoading").classList.remove("active");
 }
 
+/* ------------------------- لودینگ حذف ------------------------- */
+function showRemoveLoading() {
+    document.getElementById("removeLoading").classList.add("active");
+}
+function hideRemoveLoading() {
+    document.getElementById("removeLoading").classList.remove("active");
+}
+
+/* ------------------------- بارگذاری سانس ------------------------- */
 async function loadSession() {
     let res = await fetch("/api/latest-session");
     let data = await res.json();
 
     if (!data || !data.id) {
-        document.getElementById("sessionInfo").innerHTML = "<b>هنوز سانسی ثبت نشده</b>";
+        document.getElementById("sessionInfo").innerHTML = "<b>سانسی ثبت نشده</b>";
         hideLoading();
         return;
     }
@@ -259,6 +283,7 @@ async function loadSession() {
     hideLoading();
 }
 
+/* ------------------------- بارگذاری بازیکنان ------------------------- */
 async function loadPlayers() {
     let res = await fetch("/api/players", {
         method:"POST",
@@ -283,6 +308,7 @@ async function loadPlayers() {
     updateCapacity();
 }
 
+/* ------------------------- ظرفیت ------------------------- */
 function updateCapacity() {
     const max = 12;
     let left = max - CURRENT_PLAYER_COUNT;
@@ -299,17 +325,18 @@ function updateCapacity() {
     }
 }
 
+/* ------------------------- افزودن بازیکن ------------------------- */
 async function addPlayer() {
     if (!SESSION_ID) return alert("سانس ثبت نشده");
 
     let name = playerName.value.trim();
     if (!name) return alert("نام را وارد کنید");
 
-    let existingNames = Array.from(document.querySelectorAll("#playersList li span"))
-                              .map(s => s.textContent.replace(/^\d+\.\s*/, "").trim());
+    let existing = Array.from(document.querySelectorAll("#playersList li span"))
+                        .map(s => s.textContent.replace(/^\d+\.\s*/, "").trim());
 
-    if (existingNames.includes(name)) {
-        alert("این نام قبلاً ثبت شده است");
+    if (existing.includes(name)) {
+        alert("این بازیکن قبلاً ثبت شده است");
         return;
     }
 
@@ -319,32 +346,38 @@ async function addPlayer() {
     let res = await fetch("/api/add-player", {
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ session_id: SESSION_ID, player_name: name })
+        body: JSON.stringify({
+            session_id: SESSION_ID,
+            player_name: name
+        })
     });
-
-    let data = await res.json();
 
     hideAddLoading();
     addBtn.disabled = false;
 
+    let data = await res.json();
+
     if (data.ok) {
         playerName.value = "";
         await loadPlayers();
-    } else if (data.msg === "duplicate") {
-        alert("این بازیکن قبلاً ثبت شده است.");
     } else {
-        alert("این سانس تکمیل شده است.");
+        alert("ثبت نام انجام نشد");
     }
 }
 
+/* ------------------------- حذف بازیکن ------------------------- */
 async function removePlayer(id) {
+    showRemoveLoading();
+
     await fetch("/api/remove-player", {
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body: JSON.stringify({ id })
     });
 
-    loadPlayers();
+    await loadPlayers();
+
+    hideRemoveLoading();
 }
 
 loadSession();
