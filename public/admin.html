@@ -5,90 +5,143 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>مدیریت سانس</title>
 
-<!-- فونت -->
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font/dist/font-face.css" rel="stylesheet">
 
-<!-- jQuery -->
 <script src="https://unpkg.com/jquery@3.6.0/dist/jquery.min.js"></script>
-
-<!-- Persian Date & Datepicker -->
 <script src="https://unpkg.com/persian-date/dist/persian-date.js"></script>
 <script src="https://unpkg.com/persian-datepicker/dist/js/persian-datepicker.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/persian-datepicker/dist/css/persian-datepicker.min.css">
 
 <style>
-    body {
-        font-family: 'Vazir', sans-serif;
-        direction: rtl;
-        background: #f1f1f1;
-        padding: 20px;
-        margin: 0;
-    }
+* { box-sizing: border-box; }
 
-    .container {
-        width: 100%;
-        max-width: 480px;
-        background: white;
-        margin: auto;
-        padding: 25px;
-        border-radius: 14px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        box-sizing: border-box;
-    }
+body {
+    font-family: 'Vazir', sans-serif;
+    direction: rtl;
+    background: #f1f1f1;
+    padding: 20px;
+    margin: 0;
+    overflow: hidden;
+}
 
-    h3 {
-        margin-top: 0;
-        margin-bottom: 20px;
-        text-align: center;
-        font-size: 21px;
-        font-weight: 600;
-        color: #333;
-    }
+/* ------------------ لودینگ اولیه صفحه ------------------ */
+#loadingScreen {
+    position: fixed;
+    top: 0; right: 0;
+    width: 100%; height: 100%;
+    background: #f1f1f1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    transition: opacity .4s ease;
+}
 
-    input {
-        width: 100%;
-        padding: 14px;
-        font-size: 16px;
-        border-radius: 10px;
-        border: 1px solid #ccc;
-        background: #fafafa;
-        margin-bottom: 15px;
-        box-sizing: border-box;
-        font-family: Vazir;
-        transition: 0.2s;
-    }
+.ball-spinner {
+    width: 55px;
+    height: 55px;
+    background-image: url('ball.svg');
+    background-size: cover;
+    animation: spinBall .9s linear infinite;
+}
 
-    button {
-        width: 100%;
-        padding: 15px;
-        background: #0059b3;
-        color: white;
-        border: none;
-        border-radius: 10px;
-        font-size: 17px;
-        font-family: Vazir;
-        font-weight: 600;
-        cursor: pointer;
-        transition: 0.2s;
-    }
+.mini-ball-spinner {
+    width: 32px;
+    height: 32px;
+    background-image: url('ball.svg');
+    background-size: cover;
+    animation: spinBall .9s linear infinite;
+}
 
-    button:hover {
-        background: #004a99;
-    }
+@keyframes spinBall {
+    100% { transform: rotate(360deg); }
+}
 
-    .hidden {
-        display: none;
-    }
+.loading-text {
+    margin-top: 15px;
+    font-size: 15px;
+    color: #333;
+}
+
+/* ------------------ لودینگ ورود ------------------ */
+#loginLoading {
+    width: 100%;
+    padding: 25px 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+#loginLoading.active {
+    display: flex !important;
+}
+
+/* ------------------ فرم‌ها ------------------ */
+.container {
+    width: 100%;
+    max-width: 480px;
+    background: white;
+    margin: auto;
+    padding: 25px;
+    border-radius: 14px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    margin-top: 25px;
+}
+
+.hidden { display: none; }
+
+input {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    background: #fafafa;
+    margin-bottom: 15px;
+}
+
+button {
+    width: 100%;
+    padding: 15px;
+    background: #0059b3;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #004a99;
+}
 </style>
+
 </head>
 <body>
 
+<!-- ------------------ لودینگ اولیه ------------------ -->
+<div id="loadingScreen">
+    <div class="ball-spinner"></div>
+    <div class="loading-text">در حال بارگذاری...</div>
+</div>
+
+<!-- ------------------ ورود ------------------ -->
 <div class="container" id="loginBox">
     <h3>ورود مدیر</h3>
     <input id="password" type="password" placeholder="رمز مدیریت">
+
     <button id="loginBtn">ورود</button>
+
+    <div id="loginLoading">
+        <div class="mini-ball-spinner"></div>
+        <div style="font-size:13px; color:#444; margin-top:4px;">در حال بررسی...</div>
+    </div>
 </div>
 
+<!-- ------------------ پنل مدیریت ------------------ -->
 <div class="container hidden" id="adminBox">
     <h3>ثبت سانس جدید</h3>
 
@@ -103,11 +156,33 @@
 </div>
 
 <script>
+
+/* ------------------ مخفی کردن لودینگ صفحه ------------------ */
+function hideMainLoading() {
+    let loader = document.getElementById("loadingScreen");
+    loader.style.opacity = "0";
+    setTimeout(() => {
+        loader.style.display = "none";
+        document.body.style.overflow = "auto";
+    }, 400);
+}
+
+/* ------------------ لودینگ ورود ------------------ */
+function showLoginLoading() {
+    document.getElementById("loginLoading").classList.add("active");
+}
+function hideLoginLoading() {
+    document.getElementById("loginLoading").classList.remove("active");
+}
+
 document.addEventListener("DOMContentLoaded", function () {
 
     const adminSecret = "admin123";
 
-    /* تقویم شمسی کاملاً درست */
+    /* اجرای لودینگ صفحه */
+    setTimeout(hideMainLoading, 500);
+
+    /* تقویم */
     $("#inputTime").persianDatepicker({
         autoClose: true,
         initialValue: false,
@@ -120,60 +195,55 @@ document.addEventListener("DOMContentLoaded", function () {
         },
 
         onSelect: function (unix) {
-
-            console.clear();
             const pd = new persianDate(unix);
-            console.log("unix:", unix);
-            console.log("pd:", pd.format("YYYY/MM/DD HH:mm"));
 
-            /* استخراج روز */
             const day = pd.format("dddd YYYY/MM/DD");
-
-            /* شروع سانس */
             const startTime = pd.format("HH:mm");
-
-            /* پایان سانس با ۹۰ دقیقه بعد */
             const endTime = pd.clone().add('minute', 90).format("HH:mm");
 
-            /* ذخیره فیلدها */
             document.getElementById("dayField").value = day;
             document.getElementById("timeField").value = `${startTime} تا ${endTime}`;
-
-            /* نمایش در input اصلی داخل صفحه */
             document.getElementById("inputTime").value = `${day} - ${startTime} تا ${endTime}`;
         }
     });
 
-    /* دکمه ورود */
+    /* ------------------ ورود ------------------ */
     document.getElementById("loginBtn").onclick = function () {
         const pass = document.getElementById("password").value.trim();
-        if (pass === adminSecret) {
-            document.getElementById("loginBox").classList.add("hidden");
-            document.getElementById("adminBox").classList.remove("hidden");
-        } else {
-            alert("رمز اشتباه است");
-        }
+
+        showLoginLoading();
+
+        setTimeout(() => {
+            if (pass === adminSecret) {
+                hideLoginLoading();
+                document.getElementById("loginBox").classList.add("hidden");
+                document.getElementById("adminBox").classList.remove("hidden");
+            } else {
+                hideLoginLoading();
+                alert("رمز اشتباه است");
+            }
+        }, 700);
     };
 
-    /* ذخیره سانس */
+    /* ------------------ ذخیره ------------------ */
     document.getElementById("saveBtn").onclick = async function () {
 
         let day = document.getElementById("dayField").value.trim();
         let time = document.getElementById("timeField").value.trim();
         let place = document.getElementById("inputPlace").value.trim();
-        let location = document.getElementById("inputLocation").value.trim();
+        let locationLink = document.getElementById("inputLocation").value.trim();
 
         let res = await fetch("/api/save-session", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ day, time, place, location })
+            body: JSON.stringify({ day, time, place, location: locationLink })
         });
 
         let out = await res.json();
 
         if (out.ok) {
             alert("سانس ذخیره شد!");
-            location.href = "/";
+            location.href = "/";   // ← مسیر صحیح در Express
         } else {
             alert("خطا در ذخیره‌سازی");
         }
