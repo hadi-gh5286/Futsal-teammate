@@ -5,139 +5,193 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ثبت‌نام سانس فوتسال</title>
 
-<!-- فونت وزیر (لوکال/وب) -->
 <style>
 @font-face {
     font-family: 'Vazir';
     src: url('Vazir.woff2') format('woff2'),
          url('Vazir.woff') format('woff');
 }
-</style>
 
-<style>
+/* جلوگیری از اسکرول افقی */
+* { box-sizing: border-box; }
 body {
     font-family: 'Vazir', sans-serif;
     direction: rtl;
-    margin:0;
-    padding:0;
-    background:#f1f1f1;
-    display:flex;
-    justify-content:center;
-    align-items:flex-start;
-    min-height:100vh;
+    margin: 0;
+    padding: 0;
+    background: #f1f1f1;
+    overflow-x: hidden;
 }
 
+/* لودینگ تمام‌صفحه */
+#loadingScreen {
+    position: fixed;
+    top: 0; right: 0;
+    width: 100%; height: 100%;
+    background: #f1f1f1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    transition: opacity 0.4s ease;
+}
+
+/* توپ فوتسال چرخان (با ball.svg خودت) */
+.ball-spinner {
+    width: 55px;
+    height: 55px;
+    background-image: url('ball.svg'); /* ← توپ خودت */
+    background-size: cover;
+    background-position: center;
+    animation: spinBall 0.9s linear infinite;
+}
+
+.mini-ball-spinner {
+    width: 32px;
+    height: 32px;
+    background-image: url('ball.svg'); /* ← توپ خودت */
+    background-size: cover;
+    background-position: center;
+    animation: spinBall 0.9s linear infinite;
+}
+
+@keyframes spinBall {
+    100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+    margin-top: 15px;
+    font-size: 15px;
+    color: #333;
+}
+
+/* لایه اصلی */
 .wrapper {
-    width:100%;
-    max-width:430px;
-    padding:15px;
+    width: 100%;
+    max-width: 430px;
+    padding: 15px;
+    margin: auto;
 }
 
 .card {
-    background:white;
-    padding:25px;
-    border-radius:18px;
-    box-shadow:0 4px 16px rgba(0,0,0,.12);
-    text-align:center;
+    background: white;
+    padding: 25px;
+    border-radius: 18px;
+    box-shadow: 0 4px 16px rgba(0,0,0,.12);
+    text-align: center;
 }
 
-/* دکمه ورود مدیر */
 .admin-btn {
-    display:inline-block;
-    padding:10px 22px;
-    background:#ff9800;
-    color:white;
-    font-size:15px;
-    border-radius:10px;
-    text-decoration:none;
-    margin-bottom:18px;
+    display: inline-block;
+    padding: 10px 22px;
+    background: #ff9800;
+    color: white;
+    font-size: 15px;
+    border-radius: 10px;
+    text-decoration: none;
+    margin-bottom: 18px;
 }
 
-/* باکس اطلاعات سانس */
 #sessionInfo {
-    background:#fafafa;
-    padding:14px;
-    border-radius:12px;
-    border:1px solid #ddd;
-    margin-bottom:15px;
-    font-size:14px;
-    line-height:1.8;
+    background: #fafafa;
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid #ddd;
+    margin-bottom: 15px;
+    font-size: 14px;
+    line-height: 1.8;
 }
 
-/* ظرفیت */
 #capacityBox {
-    background:#28a745;
-    padding:12px;
-    color:white;
-    border-radius:12px;
-    font-size:15px;
-    font-weight:bold;
-    margin-bottom:15px;
+    background: #28a745;
+    padding: 12px;
+    color: white;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: bold;
+    margin-bottom: 15px;
 }
 
-/* فیلد + دکمه کنار هم */
+/* ورودی + دکمه */
 .input-row {
-    display:flex;
-    gap:8px;
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    overflow: hidden;
 }
-
 .input-row input {
-    flex:1;
-    padding:12px;
-    border-radius:10px;
-    border:1px solid #bbb;
-    font-size:14px;
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #bbb;
+    font-size: 14px;
+    min-width: 0;
 }
-
 .input-row button {
-    width:95px;
-    padding:12px;
-    border-radius:10px;
-    background:#0b66d1;
-    color:white;
-    border:none;
-    font-size:14px;
-    cursor:pointer;
+    width: 95px;
+    padding: 12px;
+    border-radius: 10px;
+    background: #0b66d1;
+    color: white;
+    border: none;
+    font-size: 14px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+button:disabled { background: #888; }
+
+/* لودینگ کوچک */
+#addLoading {
+    margin-top: 12px;
+    text-align: center;
+    display: none;
+}
+#addLoading div {
+    margin: auto;
 }
 
-button:disabled { background:#888; }
-
-/* لیست بازیکنان */
+/* لیست */
 ul {
-    padding:0;
-    margin-top:20px;
-    list-style:none;
+    padding: 0;
+    margin-top: 20px;
+    list-style: none;
 }
-
 li {
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding:10px 12px;
-    background:#fff;
-    border:1px solid #ddd;
-    border-radius:10px;
-    margin-bottom:8px;
-    font-size:14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    font-size: 14px;
 }
 
-/* دکمه حذف کوچک */
 .remove-btn {
-    background:#d9534f;
-    color:white;
-    padding:5px 8px;
-    border:none;
-    border-radius:6px;
-    cursor:pointer;
-    font-size:12px;
-    white-space:nowrap;
+    background: #d9534f;
+    color: white;
+    padding: 5px 8px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    white-space: nowrap;
 }
 </style>
+
 </head>
 
 <body>
 
-<div class="wrapper">
+<!-- لودینگ اصلی -->
+<div id="loadingScreen">
+    <div class="ball-spinner"></div>
+    <div class="loading-text">در حال بارگذاری...</div>
+</div>
+
+<div class="wrapper" id="mainContent" style="opacity:0;">
     <div class="card">
 
         <a class="admin-btn" href="admin.html">ورود مدیر</a>
@@ -152,6 +206,12 @@ li {
             <button id="addBtn" onclick="addPlayer()">افزودن</button>
         </div>
 
+        <!-- لودینگ کوچک -->
+        <div id="addLoading">
+            <div class="mini-ball-spinner"></div>
+            <div style="font-size:13px; color:#444; margin-top:4px;">در حال افزودن...</div>
+        </div>
+
         <ul id="playersList"></ul>
 
     </div>
@@ -161,13 +221,29 @@ li {
 let SESSION_ID = null;
 let CURRENT_PLAYER_COUNT = 0;
 
-/* دریافت آخرین سانس */
+function hideLoading() {
+    let loader = document.getElementById("loadingScreen");
+    loader.style.opacity = "0";
+    setTimeout(() => {
+        loader.style.display = "none";
+        document.getElementById("mainContent").style.opacity = "1";
+    }, 400);
+}
+
+function showAddLoading() {
+    document.getElementById("addLoading").style.display = "block";
+}
+function hideAddLoading() {
+    document.getElementById("addLoading").style.display = "none";
+}
+
 async function loadSession() {
     let res = await fetch("/api/latest-session");
     let data = await res.json();
 
     if (!data || !data.id) {
         document.getElementById("sessionInfo").innerHTML = "<b>هنوز سانسی ثبت نشده</b>";
+        hideLoading();
         return;
     }
 
@@ -179,10 +255,10 @@ async function loadSession() {
         "<strong>سالن:</strong> " + data.place + "<br>" +
         "<strong>لوکیشن:</strong> <a href='" + data.location + "' target='_blank'>مشاهده</a>";
 
-    loadPlayers();
+    await loadPlayers();
+    hideLoading();
 }
 
-/* دریافت لیست بازیکنان */
 async function loadPlayers() {
     let res = await fetch("/api/players", {
         method:"POST",
@@ -207,11 +283,9 @@ async function loadPlayers() {
     updateCapacity();
 }
 
-/* نمایش ظرفیت */
 function updateCapacity() {
     const max = 12;
     let left = max - CURRENT_PLAYER_COUNT;
-
     let box = document.getElementById("capacityBox");
 
     if (left > 0) {
@@ -225,21 +299,22 @@ function updateCapacity() {
     }
 }
 
-/* افزودن بازیکن */
 async function addPlayer() {
-    if (!SESSION_ID) return alert("سانس ثبت نشده است");
+    if (!SESSION_ID) return alert("سانس ثبت نشده");
 
     let name = playerName.value.trim();
     if (!name) return alert("نام را وارد کنید");
 
-    // *** جلوگیری از اسم تکراری در فرانت‌اند ***
     let existingNames = Array.from(document.querySelectorAll("#playersList li span"))
                               .map(s => s.textContent.replace(/^\d+\.\s*/, "").trim());
+
     if (existingNames.includes(name)) {
         alert("این نام قبلاً ثبت شده است");
         return;
     }
-    // *************************************************
+
+    showAddLoading();
+    addBtn.disabled = true;
 
     let res = await fetch("/api/add-player", {
         method:"POST",
@@ -249,9 +324,12 @@ async function addPlayer() {
 
     let data = await res.json();
 
+    hideAddLoading();
+    addBtn.disabled = false;
+
     if (data.ok) {
         playerName.value = "";
-        loadPlayers();
+        await loadPlayers();
     } else if (data.msg === "duplicate") {
         alert("این بازیکن قبلاً ثبت شده است.");
     } else {
@@ -259,7 +337,6 @@ async function addPlayer() {
     }
 }
 
-/* حذف */
 async function removePlayer(id) {
     await fetch("/api/remove-player", {
         method:"POST",
